@@ -54,7 +54,7 @@ contract EmpireCollectionV2 is Initializable,ERC721Upgradeable {
     }
 
     function bulkTransfer(address[] memory to, uint[] memory tokenIds) public virtual{
-        require( to.length == tokenIds.length, "Lenght not matched, Invalid Format");
+        require( to.length == tokenIds.length, "Lenght not matched, Invalid Format"); // TODO:[INFO] typo
         require( to.length <= 40, "You can transfer max 40 tokens");
         for(uint i = 0; i < to.length; i++){
             safeTransferFrom(msg.sender, to[i], tokenIds[i]);

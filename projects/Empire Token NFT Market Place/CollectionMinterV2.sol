@@ -608,7 +608,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     function transferOwnership(address newOwner) public virtual onlyOwner { // TODO: external
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         collectionOwner = newOwner;
-        emit OwnershipTransferred(collectionOwner, newOwner); // TODO: wrong order
+        emit OwnershipTransferred(collectionOwner, newOwner); // TODO:[INFO] wrong order
     }
 
     function setRoyalty(uint256 _royalty) public onlyOwner{ // TODO: external

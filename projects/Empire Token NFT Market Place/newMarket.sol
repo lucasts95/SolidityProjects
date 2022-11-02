@@ -81,7 +81,7 @@ contract EmpireMarketplaceV5 is Initializable{
         _;
     }
     modifier OnlyItemOwner(address tokenAddress, uint256 tokenId){
-        IERC721 tokenContract = IERC721(tokenAddress); // TODO: 
+        IERC721 tokenContract = IERC721(tokenAddress); // TODO:[TEST] if tokenAddress do not implement IERC721, what will happens?
         require(tokenContract.ownerOf(tokenId) == msg.sender);
         _;
     }
@@ -166,8 +166,8 @@ contract EmpireMarketplaceV5 is Initializable{
             auctionItemId[tokenAddress][tokenId] = newItemId;
 
             assert(itemsForSale[newItemId - 1].id == newItemId);
-            emit ItemAdded(newItemId, tokenId, tokenAddress, askingPrice, bidItem);
-            return newItemId;
+            emit ItemAdded(newItemId, tokenId, tokenAddress, askingPrice, bidItem); // TODO: no need to distinguish whether is  ERC20 or not?
+        return newItemId;
         }
         else{
             itemsForSale[auctionItemId[tokenAddress][tokenId] - 1].isSold = false;
@@ -185,18 +185,18 @@ contract EmpireMarketplaceV5 is Initializable{
     function removeItem(uint256 id) public{
         address collectionAddress = itemsForSale[id-1].tokenAddress;
         require(activeItems[collectionAddress][itemsForSale[id-1].tokenId],'Already not listed in market');
-        require(IERC721(collectionAddress).ownerOf(itemsForSale[id-1].tokenId) == msg.sender,'Only Item Can Remove From Market');
+        require(IERC721(collectionAddress).ownerOf(itemsForSale[id-1].tokenId) == msg.sender,'Only Item Can Remove From Market'); // TODO:[INFO] error code inaccurate,  => `Item Owner`
         activeItems[collectionAddress][itemsForSale[id-1].tokenId] = false;
         if(itemsForSale[id-1].isSold == false && itemsForSale[id-1].bidItem == true){
             pendingReturns[itemsForSale[id-1].bidderAddress][itemsForSale[id-1].ERC20][itemsForSale[id-1].id] = itemsForSale[id-1].bidPrice;
             itemsForSale[id - 1].bidItem = false;
             itemsForSale[id - 1].bidderAddress = address(0);
             itemsForSale[id - 1].bidPrice = 0;
-        }
+        } // TODO:[review] 
         itemsForSale[id - 1].askingPrice = 0;
 
     }
-
+    // 1. ITEM is for sale 2. buyer has approval
     function BuyItem(uint256 id) external payable ItemExists(id) HasTransferApproval(itemsForSale[id-1].tokenAddress, itemsForSale[id-1].tokenId) {
         require(activeItems[itemsForSale[id - 1].tokenAddress][itemsForSale[id-1].tokenId],'Item not listed in market');
         require(itemsForSale[id-1].isSold == false,"Item already sold");
@@ -248,7 +248,7 @@ contract EmpireMarketplaceV5 is Initializable{
         //itemsForSale[id - 1].seller.transfer(msg.value);
 
         //itemsForSale[id - 1].seller = payable(msg.sender);
-        emit ItemSold(id, msg.sender, itemsForSale[id - 1].askingPrice);
+        emit ItemSold(id, msg.sender, itemsForSale[id - 1].askingPrice); // TODO:[INFO] askingPrice => actual msg.value? no refund?
     }
 
     function _buyitemERC(uint256 id) internal{
@@ -260,7 +260,7 @@ contract EmpireMarketplaceV5 is Initializable{
         uint256 sFee = _calculateServiceFee(val);
         uint256 aFee = _calculateAggregatorFee(val);
         uint256 rFee = _calculateRoyaltyFee(val, Collection.Fee());
-        if(itemsForSale[id-1].ERC20 == empireToken){
+        if(itemsForSale[id-1].ERC20 == empireToken){                            // empireToken only sub rFee
             tokenERC.transferFrom(msg.sender,itemOwner, itemsForSale[id - 1].askingPrice.sub(rFee));
             if(rFee > 0){
                 tokenERC.transferFrom(msg.sender,Collection.collectionOwner(), rFee);
@@ -287,7 +287,7 @@ contract EmpireMarketplaceV5 is Initializable{
     }
 
     function _calculateServiceFee(uint256 _amount) public view returns(uint256){
-        return _amount.mul(serviceFee-AggregatorFee).div(
+        return _amount.mul(serviceFee-AggregatorFee).div( // TODO: loss of precision, use `sub` so it is ok
             10**4
         );
     }
@@ -305,11 +305,11 @@ contract EmpireMarketplaceV5 is Initializable{
     }
 
     function addERC20tokens(address erc20) public onlyOwner{
-        validERC[erc20] = true;
+        validERC[erc20] = true;  // todo no emit event & no 0 address validation
     }
 
     function removeERC20tokens(address erc20) public onlyOwner{
-        validERC[erc20] = false;
+        validERC[erc20] = false;  // todo no emit event & no 0 address validation
     }
 
     // put a bid on an item
@@ -332,7 +332,7 @@ contract EmpireMarketplaceV5 is Initializable{
     function _placeBidSimple(uint256 id) internal{
         uint256 totalPrice = 0;
         if (pendingReturns[msg.sender][address(0)][itemsForSale[id-1].id] == 0){
-            totalPrice = msg.value;
+            totalPrice = msg.value; // first bid
         }
         else{
             totalPrice = msg.value + pendingReturns[msg.sender][address(0)][itemsForSale[id-1].id];
