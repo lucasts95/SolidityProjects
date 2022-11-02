@@ -581,7 +581,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         _symbol = symbol_;
         royalty = _royalty;
         tokenID = startTokenID;
-        isMinter[_owner] = true;
+        isMinter[_owner] = true; // TODO: centralization
         collectionOwner = _owner;
     }
 
@@ -605,25 +605,25 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         super.supportsInterface(interfaceId);
     }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) public virtual onlyOwner { // TODO: external
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         collectionOwner = newOwner;
-        emit OwnershipTransferred(collectionOwner, newOwner);
+        emit OwnershipTransferred(collectionOwner, newOwner); // TODO: wrong order
     }
 
-    function setRoyalty(uint256 _royalty) public onlyOwner{
+    function setRoyalty(uint256 _royalty) public onlyOwner{ // TODO: external
         require(_royalty < 3000, 'Royalty must be less than 30%');
-        royalty = _royalty;
+        royalty = _royalty; // TODO: // todo no emit event
     }
 
-    function Fee() public view returns (uint256){
+    function Fee() public view returns (uint256){ // TODO: external
         return royalty;
     }
 
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(address owner) public view virtual override returns (uint256) {
+    function balanceOf(address owner) public view virtual override returns (uint256) { // TODO: external
         require(owner != address(0), "ERC721: balance query for the zero address");
         return _balances[owner];
     }
@@ -637,25 +637,25 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         return owner;
     }
 
-    function addMinter(address MinterAdd) public onlyOwner{
-        isMinter[MinterAdd] = true;
+    function addMinter(address MinterAdd) public onlyOwner{ // TODO: external
+        isMinter[MinterAdd] = true;  // todo no emit event & no 0 address validation
     }
 
-    function removeMinter(address MinterRemv) public onlyOwner{
-        isMinter[MinterRemv] = false;
+    function removeMinter(address MinterRemv) public onlyOwner{ // TODO: external
+        isMinter[MinterRemv] = false; // todo no emit event
     }
 
     /**
      * @dev See {IERC721Metadata-name}.
      */
-    function name() public view virtual override returns (string memory) {
+    function name() public view virtual override returns (string memory) { // TODO: external
         return _name;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
-    function symbol() public view virtual override returns (string memory) {
+    function symbol() public view virtual override returns (string memory) { // TODO: external
         return _symbol;
     }
 
@@ -679,7 +679,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-approve}.
      */
-    function approve(address to, uint256 tokenId) public virtual override {
+    function approve(address to, uint256 tokenId) public virtual override { // TODO: external
         address owner = ERC721.ownerOf(tokenId);
         require(to != owner, "ERC721: approval to current owner");
 
@@ -703,7 +703,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override {
+    function setApprovalForAll(address operator, bool approved) public virtual override { // TODO: external
         require(operator != _msgSender(), "ERC721: approve to caller");
 
         _operatorApprovals[_msgSender()][operator] = approved;
@@ -720,7 +720,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom(
+    function transferFrom( // TODO: external
         address from,
         address to,
         uint256 tokenId
@@ -818,14 +818,14 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      *
      * Emits a {Transfer} event.
      */
-    function safeMint(string memory tokenuri) public virtual onlyMinter{
+    function safeMint(string memory tokenuri) public virtual onlyMinter{ // TODO: [!] 自己调用会报错吗 external
         tokenID++;
         _safeMint(msg.sender, tokenID, "");
         Items[tokenID] = tokenuri;
         itemCreator[tokenID] = msg.sender;
     }
 
-    function bulkMinter(uint numOfTokens, string memory uri)public virtual {
+    function bulkMinter(uint numOfTokens, string memory uri)public virtual { // TODO: external
         require( numOfTokens <= 25, "Number of Items Exceeds Count");
         uint i;
         for (i = tokenID+1; i < numOfTokens+tokenID+1; i++) {

@@ -73,7 +73,7 @@ contract EmpireMarketplaceV5 is Initializable{
         empireToken = _empireToken;
         validERC[_empireToken] = true;
         serviceFee = 250;
-        feeAddress = address(0x6baC3dF9Bf14c26448014f7fCc462606E22A65de);
+        feeAddress = address(0x6baC3dF9Bf14c26448014f7fCc462606E22A65de); // TODO: hard code
     }
 
     modifier onlyOwner{
@@ -81,7 +81,7 @@ contract EmpireMarketplaceV5 is Initializable{
         _;
     }
     modifier OnlyItemOwner(address tokenAddress, uint256 tokenId){
-        IERC721 tokenContract = IERC721(tokenAddress);
+        IERC721 tokenContract = IERC721(tokenAddress); // TODO: 
         require(tokenContract.ownerOf(tokenId) == msg.sender);
         _;
     }
@@ -106,16 +106,16 @@ contract EmpireMarketplaceV5 is Initializable{
     }
 
     function changeFeeAddress(address newFeeAddress) public onlyOwner{
-        feeAddress = newFeeAddress;
+        feeAddress = newFeeAddress; // todo no emit event & no 0 address validation
     }
 
     function changeFeeAggregatorAddress(address newFeeAggregatorAddress) public onlyOwner{
-        feeAggregatorAddress = newFeeAggregatorAddress;
+        feeAggregatorAddress = newFeeAggregatorAddress;  // todo no emit event & no 0 address validation
     }
 
     function changeServiceFee(uint256 newFee) public onlyOwner{
         require(newFee < 3000, 'Service Should be less than 30%');
-        serviceFee = newFee;
+        serviceFee = newFee; // todo no emit event
     }
 
     function changeAggregatorFee(uint256 newFee) public onlyOwner{
