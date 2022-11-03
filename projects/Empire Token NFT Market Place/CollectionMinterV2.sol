@@ -605,25 +605,25 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         super.supportsInterface(interfaceId);
     }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner { // TODO: external
+    function transferOwnership(address newOwner) public virtual onlyOwner { // 
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         collectionOwner = newOwner;
         emit OwnershipTransferred(collectionOwner, newOwner); // TODO:[INFO] wrong order
     }
 
-    function setRoyalty(uint256 _royalty) public onlyOwner{ // TODO: external
+    function setRoyalty(uint256 _royalty) public onlyOwner{ // 
         require(_royalty < 3000, 'Royalty must be less than 30%');
         royalty = _royalty; // TODO: // todo no emit event
     }
 
-    function Fee() public view returns (uint256){ // TODO: external
+    function Fee() public view returns (uint256){ // 
         return royalty;
     }
 
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(address owner) public view virtual override returns (uint256) { // TODO: external
+    function balanceOf(address owner) public view virtual override returns (uint256) { // 
         require(owner != address(0), "ERC721: balance query for the zero address");
         return _balances[owner];
     }
@@ -637,25 +637,25 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         return owner;
     }
 
-    function addMinter(address MinterAdd) public onlyOwner{ // TODO: external
+    function addMinter(address MinterAdd) public onlyOwner{ // 
         isMinter[MinterAdd] = true;  // todo no emit event & no 0 address validation
     }
 
-    function removeMinter(address MinterRemv) public onlyOwner{ // TODO: external
+    function removeMinter(address MinterRemv) public onlyOwner{ // 
         isMinter[MinterRemv] = false; // todo no emit event
     }
 
     /**
      * @dev See {IERC721Metadata-name}.
      */
-    function name() public view virtual override returns (string memory) { // TODO: external
+    function name() public view virtual override returns (string memory) { // 
         return _name;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
-    function symbol() public view virtual override returns (string memory) { // TODO: external
+    function symbol() public view virtual override returns (string memory) { // 
         return _symbol;
     }
 
@@ -679,7 +679,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-approve}.
      */
-    function approve(address to, uint256 tokenId) public virtual override { // TODO: external
+    function approve(address to, uint256 tokenId) public virtual override { // 
         address owner = ERC721.ownerOf(tokenId);
         require(to != owner, "ERC721: approval to current owner");
 
@@ -703,7 +703,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override { // TODO: external
+    function setApprovalForAll(address operator, bool approved) public virtual override { // 
         require(operator != _msgSender(), "ERC721: approve to caller");
 
         _operatorApprovals[_msgSender()][operator] = approved;
@@ -720,7 +720,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC721-transferFrom}.
      */
-    function transferFrom( // TODO: external
+    function transferFrom( // 
         address from,
         address to,
         uint256 tokenId
@@ -825,7 +825,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         itemCreator[tokenID] = msg.sender;
     }
 
-    function bulkMinter(uint numOfTokens, string memory uri)public virtual { // TODO: external
+    function bulkMinter(uint numOfTokens, string memory uri)public virtual { // 
         require( numOfTokens <= 25, "Number of Items Exceeds Count");
         uint i;
         for (i = tokenID+1; i < numOfTokens+tokenID+1; i++) {

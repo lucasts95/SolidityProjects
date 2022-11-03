@@ -58,10 +58,10 @@ contract EmpireMarketplaceV5 is Initializable{
     AuctionItem[] public itemsForSale;
 
     //to check if item is open to market
-    mapping (address => mapping (uint256 => bool)) activeItems;
-    mapping(address => bool) validERC;
-    mapping (address => mapping(uint256=>uint256)) auctionItemId;
-    mapping (address => mapping (address => mapping(uint256 => uint256))) pendingReturns;
+    mapping (address => mapping (uint256 => bool)) public activeItems;
+    mapping(address => bool) public validERC;
+    mapping (address => mapping(uint256=>uint256)) public auctionItemId;
+    mapping (address => mapping (address => mapping(uint256 => uint256))) public pendingReturns;
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event ItemAdded(uint id, uint tokenId, address tokenAddress, uint256 askingPrice, bool bidItem);
     event ItemSold(uint id, address buyer, uint256 askingPrice);
@@ -81,10 +81,15 @@ contract EmpireMarketplaceV5 is Initializable{
         _;
     }
     modifier OnlyItemOwner(address tokenAddress, uint256 tokenId){
-        IERC721 tokenContract = IERC721(tokenAddress); // TODO:[TEST] if tokenAddress do not implement IERC721, what will happens?
+        IERC721 tokenContract = IERC721(tokenAddress); //
         require(tokenContract.ownerOf(tokenId) == msg.sender);
         _;
     }
+    event doNoting(string str);
+    function testNot721(address a, uint256 b) OnlyItemOwner(a, b) public {
+        emit doNoting("xuanku");
+    }
+
     modifier OnlyItemOwnerAuc(uint256 aucItemId){
         IERC721 tokenContract = IERC721(itemsForSale[aucItemId-1].tokenAddress);
         require(tokenContract.ownerOf(itemsForSale[aucItemId-1].tokenId) == msg.sender);
@@ -192,11 +197,11 @@ contract EmpireMarketplaceV5 is Initializable{
             itemsForSale[id - 1].bidItem = false;
             itemsForSale[id - 1].bidderAddress = address(0);
             itemsForSale[id - 1].bidPrice = 0;
-        } // TODO:[review] 
+        } // :[review] 
         itemsForSale[id - 1].askingPrice = 0;
 
     }
-    // 1. ITEM is for sale 2. buyer has approval
+    // 1. ITEM is for sale 2. address(this) has approval
     function BuyItem(uint256 id) external payable ItemExists(id) HasTransferApproval(itemsForSale[id-1].tokenAddress, itemsForSale[id-1].tokenId) {
         require(activeItems[itemsForSale[id - 1].tokenAddress][itemsForSale[id-1].tokenId],'Item not listed in market');
         require(itemsForSale[id-1].isSold == false,"Item already sold");
@@ -287,7 +292,7 @@ contract EmpireMarketplaceV5 is Initializable{
     }
 
     function _calculateServiceFee(uint256 _amount) public view returns(uint256){
-        return _amount.mul(serviceFee-AggregatorFee).div( // TODO: loss of precision, use `sub` so it is ok
+        return _amount.mul(serviceFee-AggregatorFee).div( // : loss of precision, use `sub` so it is ok
             10**4
         );
     }
