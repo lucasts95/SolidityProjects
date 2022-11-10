@@ -85,10 +85,6 @@ contract EmpireMarketplaceV5 is Initializable{
         require(tokenContract.ownerOf(tokenId) == msg.sender);
         _;
     }
-    event doNoting(string str);
-    function testNot721(address a, uint256 b) OnlyItemOwner(a, b) public {
-        emit doNoting("xuanku");
-    }
 
     modifier OnlyItemOwnerAuc(uint256 aucItemId){
         IERC721 tokenContract = IERC721(itemsForSale[aucItemId-1].tokenAddress);
@@ -373,7 +369,7 @@ contract EmpireMarketplaceV5 is Initializable{
             pendingReturns[itemsForSale[id-1].bidderAddress][itemsForSale[id-1].ERC20][itemsForSale[id-1].id] = itemsForSale[id-1].bidPrice;
         }
         itemsForSale[id-1].bidPrice = totalPrice;
-        itemsForSale[id-1].bidderAddress = msg.sender;
+        itemsForSale[id-1].bidderAddress = msg.sender; // : no emit
     }
     function withdrawPrevBid(uint256 aucItemId,address _erc20) external returns(bool) {
         uint256 amount = pendingReturns[msg.sender][_erc20][aucItemId];
@@ -477,6 +473,6 @@ contract EmpireMarketplaceV5 is Initializable{
         //itemsForSale[aucItemId - 1].seller = payable(itemsForSale[aucItemId - 1].bidderAddress);
         itemsForSale[id - 1].bidderAddress = address(0);
         itemsForSale[id - 1].bidPrice = 0;
-        itemsForSale[id - 1].bidItem = false;
+        itemsForSale[id - 1].bidItem = false; // TODO [INFO] erc20? 
     }
 }
