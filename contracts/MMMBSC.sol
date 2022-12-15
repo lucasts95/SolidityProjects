@@ -47,7 +47,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
 
     mapping (uint256 => IFundHolder) public _holderByType;
 
-    IERC20MetadataUpgradeable public _baseToken;
+    IERC20MetadataUpgradeable public _baseToken; // polygon USDT
     IToken public _score;
     IToken public _fund;
     IRandom public _random;
@@ -94,7 +94,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
 
     address public _signer;
 
-    mapping (address => FundInfo) private _fundInfoByOwner;
+    mapping (address => FundInfo) private _fundInfoByOwner; // 记录马夫罗季
 
     mapping (address => FundInfo[]) private _activeFundInfos;// not buy order
 
@@ -229,13 +229,13 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
     }
 
     function _start() internal {
-        roundLimit[0] = [10 *10**6, 2000 *10**6];
+        roundLimit[0] = [10 *10**6, 2000 *10**6]; // 没用到
         roundLimit[1] = [2000 *10**6, 5000 *10**6];
         roundLimit[2] = [5000 *10**6, 10000 *10**6];
 
          baseUint = 10**6;
 
-        _baseToken = IERC20MetadataUpgradeable(0xc2132D05D31c914a87C6611C10748AEb04B58e8F);
+        _baseToken = IERC20MetadataUpgradeable(0xc2132D05D31c914a87C6611C10748AEb04B58e8F); // USDT
         _signer = 0xaDF6B5F2CBFBe44655f2049a27Bf94a8959e454b;
 
         _fund = IToken(address(0x5357a79d4421e25C7B3854Bb5a273EC1FC7d5afC));
@@ -285,7 +285,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         keepTimes = value;
     }
     
-
+    // 购买马夫罗季
     function buyFund(uint256 amount) public {
         require(!_paused, "paused");
         require(amount%(10**6) == 0, "invalid amount");
@@ -294,10 +294,10 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         UserInfo storage _userInfo = _userInfoByOwner[msg.sender];
         require(_userInfo.referrer != address(0), "not bind");
 
-        _baseToken.transferFrom(msg.sender, address(_fund), amount);
+        _baseToken.transferFrom(msg.sender, address(_fund), amount); // 用U 1:1 买马夫罗季fund
         
         // _userInfoByOwner[msg.sender].buyBalance += amount;
-        _fund.produce(msg.sender, amount);
+        _fund.produce(msg.sender, amount); // 给购买者 等额的马夫罗季
         
         currentId += 1;
 
@@ -306,7 +306,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         _fundInfo.buyValue = amount;
         _fundInfo.totalBuy += amount;
 
-        _activeFundInfos[msg.sender].push(FundInfo({
+        _activeFundInfos[msg.sender].push(FundInfo({ // 记录每次买马夫罗季的信息 买了多少 总共买了多少 用了多少
             id: currentId,
             balance: _fund.balanceOf(msg.sender),
             totalBuy: _fundInfoByOwner[msg.sender].totalBuy,
@@ -320,7 +320,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         emit BuyFund(msg.sender, currentId, _fund.balanceOf(msg.sender), amount, _fundInfo.used, _fundInfo.totalBuy, block.timestamp);
         // event BuyFund(address indexed owner, uint256 id, uint256 balance, uint256 buyValue, uint256 totalUsed, uint256 totalBuyValue, uint256 time);
     }
-
+    // 推荐人
     function bind(string calldata _code) public {
         require(!_paused, "paused");
         UserInfo storage _userInfo = _userInfoByOwner[msg.sender];
@@ -328,7 +328,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         require(account != address(0) && account != msg.sender, "invalid referrer");
         require(_userInfo.referrer == address(0), "have bind");
         _userInfo.referrer = account;
-        _score.produce(msg.sender, 200 ether);
+        _score.produce(msg.sender, 200 ether); // 填写推荐人 获得200分 每次提供帮助扣100分
 
         _userInfo.registTime = block.timestamp;
 
@@ -336,30 +336,32 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
     }
 
     event TestLog(uint256 amount, uint256 balance, address sender, address token);
-    function depositX(uint256 amount, uint256 _keepDays, bytes calldata sign, uint256 deadline) public nonReentrant nonProxy {
+    
+    // 提供帮助
+    function depositX(uint256 amount, uint256 _keepDays, bytes calldata sign, uint256 deadline) public nonReentrant nonProxy { // 不可重入 不可使用代理 必须直接请求
 
-        require(!_paused, "paused");
-        require(startTimes <= block.timestamp, "not start");
+        require(!_paused, "paused"); // 未暂停
+        require(startTimes <= block.timestamp, "not start"); // 允许时间内
         require(block.timestamp >= keepTimes, "end");
         
         require(amount > 0 && amount.mod(10*baseUint) == 0, "not allow");
 
         UserInfo storage _userInfo = _userInfoByOwner[msg.sender];
 
-        require(_userInfo.referrer != address(0), "not bind");
+        require(_userInfo.referrer != address(0), "not bind"); // 必须有推荐人
 
-        _referralByOwner[round][_userInfo.referrer].add(msg.sender);
+        _referralByOwner[round][_userInfo.referrer].add(msg.sender); // 该轮的推荐人下 记录上sender
 
-        delete _activeFundInfos[msg.sender];
+        delete _activeFundInfos[msg.sender]; // 删除msg sender的所有的马夫罗季的记录, 如果没有记录 不会报错
 
         {
             require(_baseToken.balanceOf(msg.sender) >= amount.div(2), "Insufficient USDT");
-            
+            // todo: U 一半的转给本合约
             _baseToken.transferFrom(msg.sender, address(this), amount.div(2));
         
-            _score.reduce(msg.sender, 100 ether);
-            _fund.reduce(msg.sender, amount.div(50));
-            _fundInfoByOwner[msg.sender].used += amount.div(50);
+            _score.reduce(msg.sender, 100 ether); // 扣掉100分
+            _fund.reduce(msg.sender, amount.div(50)); // 扣掉 2% U的 马夫罗季, 也就是说 20的马夫罗季可以提供1000U的帮助
+            _fundInfoByOwner[msg.sender].used += amount.div(50); // todo: 已使用 只记录 2%的amount?
         }
         
         require(_validDepositSign(sign, _keepDays, deadline, 15 minutes, msg.sender, amount) == _signer, "invalid sign");
@@ -371,25 +373,25 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         // _keepTime = _keepTime * (24 minutes);
         
 
-        _orderInfoById[currentId] = OrderInfo({
+        _orderInfoById[currentId] = OrderInfo({ // 提供帮助的订单信息
             id: currentId, 
             owner: msg.sender,
             buyValue: amount, 
             buyTime: block.timestamp, 
             keepTime: _keepTime, 
-            baseReward: _buyers[round].contains(msg.sender) ? 0 : amount.div(20), 
+            baseReward: _buyers[round].contains(msg.sender) ? 0 : amount.div(20), // todo: 这是什么奖励?
             buyDoneTime: 0,
             matchTime: 0,
             rewardValue: 0,
             relaseTime: 0,
             withdrawTime: 0,
             doneTime: 0,
-            status: 1
+            status: 1 // todo: status 1代表什么  排单中?
         });
 
         
         _buyers[round].add(msg.sender);
-        _createCode(msg.sender);
+        _createCode(msg.sender); // todo: _createCode干嘛的 生成个随机数
         
         // FundHolder public _accumulateHolder; 1 -> 0.5%
         // FundHolder public _readyHolder;  3 -> 0.2%
@@ -397,7 +399,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         // FundHolder public _exforeHolder; 4 -> 0.8%
 
         // mapping (uint256 => IFundHolder) public _holderByType;
-        {
+        {   // 2%的U分配给四个蛀虫
             _baseToken.transfer(address(_holderByType[1]), amount.mul(5).div(1000));
             _baseToken.transfer(address(_holderByType[2]), amount.mul(5).div(1000));
             _baseToken.transfer(address(_holderByType[3]), amount.mul(2).div(1000));
@@ -469,34 +471,33 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
     //     uint256 totalWithdraw;
     //     uint256 time;
     // }
-
+    // 申请帮助
     function withdrawX(uint256 withdrawId, uint256[] calldata withdrawAmounts, uint256 totalWithdraw, uint256 deadline, bytes calldata sign) public nonReentrant nonProxy {
         require(!_paused, "paused");
-        require(!_withdrawIds[round].contains(withdrawId), "have withdraw");
+        require(!_withdrawIds[round].contains(withdrawId), "have withdraw"); // 1. 随便设置个withdrawId
 
-        require(_validWithdrawSign(sign, withdrawId, withdrawAmounts, totalWithdraw, deadline, 15 minutes, msg.sender) == _signer, "invalid sign");
+        require(_validWithdrawSign(sign, withdrawId, withdrawAmounts, totalWithdraw, deadline, 15 minutes, msg.sender) == _signer, "invalid sign"); // 2. 签名校验
         _withdrawIds[round].add(withdrawId);
 
         
         // event WaitWithdraw(address owner, uint256 withdrawId, uint256 id, uint256[] withdrawAmounts, uint256 totalWithdraw, uint256 time);
 
         // event WithdrawSuccess(address owner, uint256 withdrawId, uint256 id, uint256[] withdrawAmounts, uint256 totalWithdraw, uint256 time);
-
         if (_baseToken.balanceOf(address(this)) < totalWithdraw) { // wait
             emit WaitWithdraw(msg.sender, withdrawId, withdrawAmounts, totalWithdraw, block.timestamp);
             _waitPayInfos[round].push(WithDrawInfo({
                 owner: msg.sender,
                 withdrawId: withdrawId,
-                withdrawAmounts: withdrawAmounts,
+                withdrawAmounts: withdrawAmounts, // 这个和 totalWithdraw有什么不同
                 totalWithdraw: totalWithdraw,
                 time: block.timestamp
             }));
         } else {
-            _baseToken.transfer(msg.sender, totalWithdraw);
+            _baseToken.transfer(msg.sender, totalWithdraw); // 如果合约的baseToken足够支付 直接转给提取人
             emit WithdrawSuccess(msg.sender, withdrawId, withdrawAmounts, totalWithdraw, block.timestamp);
         }
 
-        _lastOrderByOwner[msg.sender].getHelpId = withdrawId;
+        _lastOrderByOwner[msg.sender].getHelpId = withdrawId; // 记录上最后得到帮助的单号
 
         {
             _allOrders[round].push(ShowOrderInfo({
@@ -512,7 +513,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         }
     }
 
-    function _limitPay() public {
+    function _limitPay() public { //  _limitPay 做什么? 后期sc上U不够支付的时候 让别人接盘
         require(!_paused, "paused");
         if (_waitPayInfos[round].length <= _waitPayIndex) return;
         if (_waitPayIndex >= _waitPayInfos[round].length) {
@@ -520,7 +521,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
             _waitPayIndex = 0;
             return;
         }
-
+        // _waitPayInfos[round].length **必须** 大于 _waitPayIndex
         for (uint256 i = _waitPayIndex;  i < _waitPayInfos[round].length; i++) {
             WithDrawInfo memory _waitPayInfo = _waitPayInfos[round][i];
             if (_baseToken.balanceOf(address(this)) < _waitPayInfo.totalWithdraw) { // wait
@@ -532,7 +533,6 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
                 emit WithdrawSuccess(msg.sender, _waitPayInfo.withdrawId, _waitPayInfo.withdrawAmounts, _waitPayInfo.totalWithdraw, block.timestamp);
             }
         }
-
     }
 
     function orderLengthOf(address _o, uint256 _round) public view returns (uint256) {
@@ -571,7 +571,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
         _userInfo.code = _codeByOwner[_owner];
         _userInfo.score = _score.balanceOf(_owner);
         _userInfo.fund = _fund.balanceOf(_owner);
-        _userInfo.beInviters = _referralByOwner[round][_owner].length();
+        _userInfo.beInviters = _referralByOwner[round][_owner].length(); // 推荐的人 也就是下线
     }
 
     function fundInfoOf(address _owner) public view returns (FundInfo memory _fundInfo) {
@@ -634,7 +634,7 @@ contract MMMBSC is Initializable, OwnableUpgradeable {
 
     }
 
-    function createCode(address _owner) public onlyOwner {
+    function createCode(address _owner) public onlyOwner { // 生成个随机数 记录
         _createCode(_owner);
     }
 
